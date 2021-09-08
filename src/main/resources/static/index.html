@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Página Inicial</title>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" 
+integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+<style type="text/css">
+html{
+   margin: 5% 5% 5% 5%; 
+}
+</style>
+</head>
+<body>
+
+<h3>Spring Boot REST API</h3>
+
+<form action="" id="formCadastroUsuario">
+  <div class="mb-3">
+    <label for="id" class="form-label">ID</label>
+    <input type="text" class="form-control" id="id" readonly="readonly">
+  </div>
+  
+  <div class="mb-3">
+    <label for="nome" class="form-label">Nome do Usuário</label>
+    <input type="text" class="form-control" id="nome" placeholder="informe o nome" required="required">
+  </div>
+  
+  <div class="mb-3">
+    <label for="idade" class="form-label">Idade</label>
+    <input type="number" class="form-control" id="idade" required="required">
+  </div>
+
+</form>
+
+<button type="button" class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
+<button type="button" class="btn btn-secondary" onclick="document.querySelector('#formCadastroUsuario').reset()">Novo</button>
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalPesquisar">Pesquisar</button>
+<button type="button" class="btn btn-danger" onclick="deletarUsuarioTelaInicial()">Deletar</button>
+
+<div class="modal fade" id="modalPesquisar" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Pesquisa de Usuários</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="nomeBusca" class="col-form-label">Informe o nome</label>
+            <input type="text" class="form-control" id="nomeBusca">
+          </div>
+          <button type="button" class="btn btn-info" onclick="pesquisarUsuario()">Buscar</button>
+        </form>
+<div style="height: 300px; overflow: scroll;">        
+<table class="table" id="tabelaResultados">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Nome</th>
+      <th scope="col">Editar</th>
+      <th scope="col">Deletar</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+  </tbody>
+</table>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" 
+integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+<!-- Option 1: Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" 
+integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" 
+crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+  function salvarUsuario(){
+	var id = $("#id").val();
+	var nome = $("#nome").val();
+	var idade = $("#idade").val();
+	
+	if (nome == null || nome.trim() == ''){
+		$('#nome').focus();
+		alert("Informe o nome!");
+		return;
+	}
+	if (idade == null || idade.trim() == ''){
+		$('#idade').focus();
+		alert("Informe a idade!");
+		return;
+	}
+	
+	$.ajax({
+		method: "POST",
+		url: "salvar",
+		data: JSON.stringify({id: id, nome: nome, idade: idade}),
+		contentType: "application/json; charset=utf-8",
+		success: function(response){
+			$("#id").val(response.id);
+			alert("Usuário gravado com sucesso!");
+		}
+	}).fail(function(xhr, status, errorThrown){
+		alert("Erro ao salvar usuário: " + xhr.responseText);
+	});
+  }
+  
+  function pesquisarUsuario(){
+	  var nome = $("#nomeBusca").val();
+	  
+	  if (nome != null && nome.trim() != ''){
+		  $.ajax({
+				method: "GET",
+				url: "buscarPorNome",
+				data: "nome= " + nome,
+				contentType: "application/json; charset=utf-8",
+				success: function(response){
+					$('#tabelaResultados > tbody > tr').remove(); //apagar os resultados antigos
+					
+					for (var i = 0; i < response.length; i++){
+						$('#tabelaResultados > tbody').append('<tr id='+response[i].id+'><td>'+response[i].id+'</td><td>'+
+						response[i].nome+'</td><td><button onclick="emEdicao('+response[i].id+')" type="button"class="btn btn-warning">Ver</button></td><td><button onclick="deletarUsuario('+response[i].id+')" type="button" class="btn btn-danger">Deletar</button></td></tr>');
+					}
+				}
+			}).fail(function(xhr, status, errorThrown){
+				alert("Erro ao buscar usuário: " + xhr.responseText);
+			});
+	  }
+  }
+  
+  function emEdicao(id){
+	  $.ajax({
+			method: "GET",
+			url: "buscarPorId",
+			data: "id= " + id,
+			contentType: "application/json; charset=utf-8",
+			success: function(response){
+				$("#id").val(response.id);
+				$("#nome").val(response.nome);
+				$("#idade").val(response.idade);
+				
+				$("#modalPesquisar").modal('hide');
+			}
+		}).fail(function(xhr, status, errorThrown){
+			alert("Erro ao buscar usuário: " + xhr.responseText);
+		});
+  }
+  
+  function deletarUsuario(id){
+	  if (confirm("Deseja mesmo deletar esse usuário?")){
+		  $.ajax({
+				method: "DELETE",
+				url: "deletar",
+				data: "id= " + id,
+				success: function(response){
+					$('#'+id).remove(); //remove linha por meio do id, que é o mesmo do usuário
+					
+					alert(response); //string retornada pela função deletar
+				}
+			}).fail(function(xhr, status, errorThrown){
+				alert("Erro ao deletar usuário: " + xhr.responseText);
+			});
+	  }
+  }
+  
+  function deletarUsuarioTelaInicial(){
+	  var id = $('#id').val();
+	  
+	  if (id != null && id.trim() != ''){
+		  deletarUsuario(id);
+		  document.getElementById('formCadastroUsuario').reset();  
+	  }
+  }
+</script>
+
+</body>
+</html>
